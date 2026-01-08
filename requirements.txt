@@ -1,0 +1,5 @@
+flask==2.2.5
+torch==2.5.1
+numpy==1.24.1
+rdkit==2025.9.3
+gunicorn==21.2.0
