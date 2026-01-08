@@ -1,5 +1,5 @@
-flask==2.2.5
-torch==2.5.1
-numpy==1.24.1
-rdkit==2025.9.3
-gunicorn==21.2.0
+flask>=2.2.0
+torch>=2.0.0
+numpy>=1.24.0
+rdkit
+gunicorn>=21.0.0
