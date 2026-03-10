@@ -2,59 +2,83 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Polypharmacy Risk AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <style>
-        /* Select2 container */
-        .select2-container {
-            width: 100% !important;
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+                }
+            }
         }
+    </script>
+    <style>
+        /* ── Select2 overrides ── */
+        .select2-container { width: 100% !important; }
+
         .select2-container--default .select2-selection--multiple {
-            background-color: #334155 !important;
-            border: 1px solid #475569 !important;
-            border-radius: 0.5rem !important;
-            padding: 0.375rem !important;
-            min-height: 3rem !important;
+            background-color: #0f172a !important;
+            border: 1px solid #334155 !important;
+            border-radius: 0.75rem !important;
+            padding: 0.5rem !important;
+            min-height: 3.25rem !important;
             cursor: text !important;
             display: flex !important;
             flex-wrap: wrap !important;
             align-items: center !important;
+            transition: border-color 0.2s, box-shadow 0.2s !important;
         }
-        /* Fix the rendered selection area */
+
+        .select2-container--default.select2-container--focus .select2-selection--multiple,
+        .select2-container--default.select2-container--open .select2-selection--multiple {
+            border-color: #6366f1 !important;
+            box-shadow: 0 0 0 3px rgba(99,102,241,0.15) !important;
+            outline: none !important;
+        }
+
         .select2-container--default .select2-selection--multiple .select2-selection__rendered {
             display: flex !important;
             flex-wrap: wrap !important;
             align-items: center !important;
-            gap: 0.25rem !important;
+            gap: 0.3rem !important;
             padding: 0 !important;
             line-height: 1.75rem !important;
         }
+
         /* Selected drug chips */
         .select2-container--default .select2-selection--multiple .select2-selection__choice {
-            background-color: #10b981 !important;
+            background: linear-gradient(135deg, #6366f1, #818cf8) !important;
             border: none !important;
             color: white !important;
-            padding: 0.25rem 0.5rem !important;
-            border-radius: 0.375rem !important;
+            padding: 0.2rem 0.6rem !important;
+            border-radius: 9999px !important;
             margin: 0 !important;
             display: inline-flex !important;
             align-items: center !important;
             flex-direction: row !important;
-            gap: 0.5rem !important;
-            font-size: 0.875rem !important;
+            gap: 0.4rem !important;
+            font-size: 0.8rem !important;
+            font-weight: 500 !important;
             line-height: 1.25rem !important;
-            height: 1.75rem !important;
+            height: 1.65rem !important;
+            letter-spacing: 0.01em !important;
         }
-        /* Remove button styling - at the end */
+
         .select2-container--default .select2-selection--multiple .select2-selection__choice__display {
             padding: 0 !important;
             margin: 0 !important;
         }
+
         .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
-            color: white !important;
+            color: rgba(255,255,255,0.7) !important;
             font-size: 1rem !important;
             font-weight: bold !important;
             cursor: pointer !important;
@@ -65,164 +89,223 @@
             position: relative !important;
             left: auto !important;
             top: auto !important;
+            transition: color 0.15s !important;
         }
+
         .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover {
-            color: #fecaca !important;
+            color: #fca5a5 !important;
             background: transparent !important;
         }
-        /* Search input inside the selection box */
+
+        /* Search input */
         .select2-container--default .select2-search--inline {
             margin: 0 !important;
             padding: 0 !important;
             display: flex !important;
             align-items: center !important;
         }
+
         .select2-container--default .select2-search--inline .select2-search__field {
             background-color: transparent !important;
-            color: white !important;
+            color: #e2e8f0 !important;
             margin: 0 !important;
             padding: 0 0.25rem !important;
             height: 1.75rem !important;
             line-height: 1.75rem !important;
             font-size: 0.875rem !important;
+            font-family: 'Inter', system-ui, sans-serif !important;
         }
+
         .select2-container--default .select2-search--inline .select2-search__field::placeholder {
-            color: #94a3b8 !important;
+            color: #64748b !important;
         }
-        /* Dropdown styling - connected to search bar */
+
+        /* Dropdown panel */
         .select2-container--open .select2-selection--multiple {
             border-bottom-left-radius: 0 !important;
             border-bottom-right-radius: 0 !important;
         }
+
         .select2-dropdown {
-            background-color: #1e293b !important;
-            border: 1px solid #475569 !important;
+            background-color: #0f172a !important;
+            border: 1px solid #334155 !important;
             border-top: none !important;
-            border-radius: 0 0 0.5rem 0.5rem !important;
+            border-radius: 0 0 0.75rem 0.75rem !important;
             margin-top: -1px !important;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.4) !important;
         }
+
         .select2-search--dropdown {
             padding: 0.5rem !important;
-            background-color: #1e293b !important;
-        }
-        .select2-search--dropdown .select2-search__field {
             background-color: #0f172a !important;
-            border: 1px solid #475569 !important;
-            color: white !important;
-            border-radius: 0.375rem !important;
-            padding: 0.5rem !important;
         }
-        /* Results list with custom scrollbar */
+
+        .select2-search--dropdown .select2-search__field {
+            background-color: #1e293b !important;
+            border: 1px solid #334155 !important;
+            color: #e2e8f0 !important;
+            border-radius: 0.5rem !important;
+            padding: 0.5rem 0.75rem !important;
+            font-family: 'Inter', system-ui, sans-serif !important;
+        }
+
+        /* Results list */
         .select2-results {
-            max-height: 250px !important;
+            max-height: 240px !important;
             overflow-y: auto !important;
-            background-color: #1e293b !important;
+            background-color: #0f172a !important;
         }
-        .select2-results::-webkit-scrollbar {
-            width: 8px !important;
-        }
-        .select2-results::-webkit-scrollbar-track {
-            background: #0f172a !important;
-            border-radius: 0 0 0.5rem 0 !important;
-        }
-        .select2-results::-webkit-scrollbar-thumb {
-            background: #475569 !important;
-            border-radius: 4px !important;
-        }
-        .select2-results::-webkit-scrollbar-thumb:hover {
-            background: #64748b !important;
-        }
+
+        .select2-results::-webkit-scrollbar { width: 6px !important; }
+        .select2-results::-webkit-scrollbar-track { background: #0f172a !important; border-radius: 0 0 0.75rem 0 !important; }
+        .select2-results::-webkit-scrollbar-thumb { background: #334155 !important; border-radius: 3px !important; }
+        .select2-results::-webkit-scrollbar-thumb:hover { background: #475569 !important; }
+
         .select2-results__option {
-            color: white !important;
-            padding: 0.5rem 1rem !important;
-            background-color: #1e293b !important;
+            color: #cbd5e1 !important;
+            padding: 0.6rem 1rem !important;
+            background-color: #0f172a !important;
+            font-size: 0.875rem !important;
+            transition: background-color 0.1s !important;
         }
+
         .select2-results__option--highlighted {
-            background-color: #10b981 !important;
+            background-color: #6366f1 !important;
+            color: white !important;
         }
+
         .select2-results__option--selected {
-            background-color: #0d9488 !important;
+            background-color: #1e293b !important;
+            color: #818cf8 !important;
         }
+
         .select2-container--default .select2-selection--multiple .select2-selection__placeholder {
-            color: #94a3b8 !important;
+            color: #64748b !important;
+            font-size: 0.875rem !important;
         }
-        /* Fix focus state */
-        .select2-container--default.select2-container--focus .select2-selection--multiple {
-            border-color: #10b981 !important;
-            outline: none !important;
-        }
-        .select2-container--default.select2-container--open .select2-selection--multiple {
-            border-color: #10b981 !important;
-        }
-        /* Clear button styling */
+
         .select2-selection__clear {
-            color: #94a3b8 !important;
+            color: #64748b !important;
             font-size: 1.25rem !important;
             margin-right: 0.5rem !important;
+            transition: color 0.15s !important;
         }
-        .select2-selection__clear:hover {
-            color: white !important;
+
+        .select2-selection__clear:hover { color: #e2e8f0 !important; }
+
+        /* ── Risk bar animation ── */
+        .risk-bar-fill {
+            transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        /* ── Result card entrance ── */
+        @keyframes cardIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .result-card {
+            animation: cardIn 0.4s ease-out both;
+        }
+
+        /* ── Spinner ── */
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spinner {
+            width: 1.25rem;
+            height: 1.25rem;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
         }
     </style>
 </head>
-<body class="bg-slate-900 text-white font-sans">
-    <div class="max-w-4xl mx-auto py-12">
-        <header class="mb-12 border-b border-slate-700 pb-6">
-            <h1 class="text-4xl font-bold text-emerald-400">Polypharmacy Risk Predictor</h1>
-            <p class="text-slate-400 mt-2">GNN-powered analysis of multi drug cocktail toxicity.</p>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col">
+
+    <div class="flex-1 max-w-3xl w-full mx-auto px-4 sm:px-6 py-10 sm:py-16">
+
+        <!-- Header -->
+        <header class="mb-10">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714a2.25 2.25 0 0 0 .659 1.591L19 14.5M14.25 3.104c.251.023.501.05.75.082M19 14.5l-2.47 5.527a.5.5 0 0 1-.457.298H7.927a.5.5 0 0 1-.457-.298L5 14.5m14 0H5" />
+                    </svg>
+                </div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">Polypharmacy Risk Predictor</h1>
+            </div>
+            <p class="text-slate-400 text-sm sm:text-base ml-[3.25rem]">
+                Predict adverse side-effect risks for multi-drug combinations using a graph neural network.
+            </p>
         </header>
 
-        <section class="bg-slate-800 p-8 rounded-xl shadow-2xl">
-            <label class="block mb-4 text-sm font-medium">Select Drugs (type to search):</label>
-            <select id="drugSelect" multiple="multiple" class="w-full mb-4" style="width: 100%;">
-            </select>
-            <button id="runButton" onclick="getRisk(event)" class="bg-emerald-600 hover:bg-emerald-500 transition-colors w-full py-3 rounded-lg font-bold">
-                Run Simulation
+        <!-- Input Card -->
+        <section class="bg-slate-900 border border-slate-800 p-5 sm:p-7 rounded-2xl shadow-lg shadow-black/20">
+            <div class="flex items-center justify-between mb-3">
+                <label for="drugSelect" class="text-sm font-medium text-slate-300">Select Drugs</label>
+                <span id="drugCount" class="text-xs text-slate-500 tabular-nums">0 selected</span>
+            </div>
+            <select id="drugSelect" multiple="multiple" class="w-full" style="width: 100%;"></select>
+            <p class="text-xs text-slate-500 mt-2 mb-5">Type to search from 150+ available drugs. Select two or more to analyze interactions.</p>
+
+            <button id="runButton" onclick="getRisk(event)"
+                class="relative w-full py-3 rounded-xl font-semibold text-sm tracking-wide
+                       bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700
+                       disabled:opacity-50 disabled:cursor-not-allowed
+                       transition-all duration-150 flex items-center justify-center gap-2">
+                <span id="btnText">Analyze Risk</span>
+                <span id="btnSpinner" class="spinner hidden"></span>
             </button>
         </section>
 
-        <section id="resultsSection" class="mt-12 hidden">
-            <h2 class="text-2xl mb-6 font-semibold">Risk Analysis Results</h2>
-            <div id="resultsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Results -->
+        <section id="resultsSection" class="mt-10 hidden">
+            <div class="flex items-center justify-between mb-5">
+                <h2 class="text-lg font-semibold text-white">Risk Analysis</h2>
+                <span id="resultsSummary" class="text-xs text-slate-500"></span>
             </div>
+            <div id="resultsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
         </section>
+
     </div>
+
+    <!-- Footer -->
+    <footer class="text-center text-xs text-slate-600 py-6 border-t border-slate-800/50">
+        Powered by GNN &middot; For research purposes only
+    </footer>
 
     <script>
         let allDrugs = [];
 
-        // Load drugs on page load
         async function loadDrugs() {
             try {
                 const response = await fetch('/get_drugs');
+                if (!response.ok) throw new Error('Failed to load drugs: ' + response.status);
                 allDrugs = await response.json();
-                
+
                 const select = $('#drugSelect');
                 allDrugs.forEach(drug => {
                     const option = new Option(drug.name + ' (' + drug.cid + ')', drug.cid, false, false);
                     select.append(option);
                 });
 
-                // Initialize Select2 with search functionality
                 select.select2({
-                    placeholder: 'Type to search and select drugs...',
+                    placeholder: 'Search drugs...',
                     allowClear: true,
                     width: '100%',
                     theme: 'default',
                     closeOnSelect: false,
                     selectionCssClass: 'select2-selection-custom'
                 });
-                
-                // Re-focus the search input after selection
-                select.on('select2:select', function() {
-                    setTimeout(function() {
-                        select.select2('open');
-                    }, 0);
+
+                // Update drug count badge
+                select.on('change', function () {
+                    const count = $(this).val() ? $(this).val().length : 0;
+                    document.getElementById('drugCount').textContent = count + ' selected';
                 });
-                
-                // Keep dropdown open while selecting multiple
-                select.on('select2:close', function() {
-                    $('.select2-search__field').focus();
+
+                // Re-open dropdown after selection for easy multi-select
+                select.on('select2:select', function () {
+                    setTimeout(function () { select.select2('open'); }, 0);
                 });
             } catch (error) {
                 console.error('Error loading drugs:', error);
@@ -233,45 +316,51 @@
         async function getRisk(event) {
             try {
                 const selectedCids = $('#drugSelect').val();
-                
-                console.log('Selected drugs:', selectedCids);
-                
-                if (!selectedCids || selectedCids.length === 0) {
-                    alert('Please select at least one drug');
+                if (!selectedCids || selectedCids.length < 2) {
+                    alert('Please select at least two drugs to analyze interactions');
                     return;
                 }
-                
-                // Show loading state
-                const button = event ? event.target : document.getElementById('runButton');
-                const originalText = button.textContent;
-                button.textContent = 'Analyzing...';
-                button.disabled = true;
-                
+
+                // Loading state
+                const btn = document.getElementById('runButton');
+                const btnText = document.getElementById('btnText');
+                const btnSpinner = document.getElementById('btnSpinner');
+                btnText.textContent = 'Analyzing';
+                btnSpinner.classList.remove('hidden');
+                btn.disabled = true;
+
                 const response = await fetch('/predict', {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({drug_ids: selectedCids})
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ drug_ids: selectedCids })
                 });
-                
+
                 if (!response.ok) {
-                    throw new Error(`Server error: ${response.status}`);
+                    const errData = await response.json().catch(() => ({}));
+                    throw new Error(errData.error || 'Server error: ' + response.status);
                 }
-                
+
                 const data = await response.json();
-                console.log('Prediction results:', data);
                 displayResults(data);
-                
+
                 // Reset button
-                button.textContent = originalText;
-                button.disabled = false;
+                btnText.textContent = 'Analyze Risk';
+                btnSpinner.classList.add('hidden');
+                btn.disabled = false;
             } catch (error) {
                 console.error('Error getting predictions:', error);
                 alert('Error getting predictions: ' + error.message);
-                // Reset button
-                const button = event ? event.target : document.getElementById('runButton');
-                button.textContent = 'Run Simulation';
-                button.disabled = false;
+                document.getElementById('btnText').textContent = 'Analyze Risk';
+                document.getElementById('btnSpinner').classList.add('hidden');
+                document.getElementById('runButton').disabled = false;
             }
+        }
+
+        function getRiskLevel(score) {
+            if (typeof score !== 'number' || isNaN(score)) return { label: 'Unknown', color: 'text-slate-400', bar: 'bg-slate-500', bg: 'bg-slate-500/10', border: 'border-slate-500/20' };
+            if (score >= 0.7) return { label: 'High Risk', color: 'text-red-400', bar: 'bg-red-500', bg: 'bg-red-500/10', border: 'border-red-500/20' };
+            if (score >= 0.4) return { label: 'Moderate', color: 'text-amber-400', bar: 'bg-amber-500', bg: 'bg-amber-500/10', border: 'border-amber-500/20' };
+            return { label: 'Low Risk', color: 'text-emerald-400', bar: 'bg-emerald-500', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' };
         }
 
         function displayResults(data) {
@@ -280,18 +369,49 @@
             grid.innerHTML = '';
             section.classList.remove('hidden');
 
-            for (const [effect, score] of Object.entries(data)) {
-                const color = score > 0.7 ? 'text-red-400' : 'text-emerald-400';
-                grid.innerHTML += `
-                    <div class="bg-slate-800 p-4 rounded-lg border border-slate-700">
-                        <p class="text-sm text-slate-400 uppercase tracking-wider">${effect}</p>
-                        <p class="text-3xl font-bold ${color}">${(score * 100).toFixed(1)}%</p>
+            // Sort by risk score descending
+            const sorted = Object.entries(data).sort((a, b) => b[1] - a[1]);
+
+            const highCount = sorted.filter(([, s]) => s >= 0.7).length;
+            document.getElementById('resultsSummary').textContent =
+                highCount > 0 ? highCount + ' high-risk factor' + (highCount > 1 ? 's' : '') + ' detected' : 'No high-risk factors detected';
+
+            sorted.forEach(([effect, score], i) => {
+                const pct = (score * 100).toFixed(1);
+                const risk = getRiskLevel(score);
+
+                const card = document.createElement('div');
+                card.className = `result-card ${risk.bg} border ${risk.border} rounded-xl p-4`;
+                card.style.animationDelay = (i * 0.06) + 's';
+
+                card.innerHTML = `
+                    <div class="flex items-start justify-between mb-3">
+                        <div>
+                            <p class="text-sm font-medium text-slate-200">${effect}</p>
+                            <p class="text-xs ${risk.color} font-medium mt-0.5">${risk.label}</p>
+                        </div>
+                        <span class="text-xl font-bold tabular-nums ${risk.color}">${pct}%</span>
+                    </div>
+                    <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                        <div class="risk-bar-fill h-full rounded-full ${risk.bar}" style="width: 0%;" data-width="${pct}%"></div>
                     </div>
                 `;
-            }
+                grid.appendChild(card);
+            });
+
+            // Animate bars after a brief delay
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    document.querySelectorAll('.risk-bar-fill').forEach(bar => {
+                        bar.style.width = bar.dataset.width;
+                    });
+                }, 100);
+            });
+
+            // Smooth scroll to results
+            section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
-        // Load drugs when page loads
         window.addEventListener('DOMContentLoaded', loadDrugs);
     </script>
 </body>

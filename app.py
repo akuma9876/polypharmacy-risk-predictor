@@ -67,24 +67,37 @@ class CocktailRiskNet(nn.Module):
 INPUT_DIM = 1097 
 
 try:
-    # Load the dictionary of state_dicts
+    # Load the checkpoint (models are nested under 'side_effect_models' key)
     checkpoint = torch.load('polypharmacy_top10_models.pt', map_location='cpu')
-    
+
+    saved_models = checkpoint['side_effect_models']
     side_effect_models = {}
-    for effect_name, state_dict in checkpoint.items():
-        # 1. Create the model instance
+    for effect_name, state_dict in saved_models.items():
         model = CocktailRiskNet(INPUT_DIM)
-        # 2. Load the weights (the 'dict' that was causing the error)
         model.load_state_dict(state_dict)
-        # 3. Set to evaluation mode immediately
         model.eval()
         side_effect_models[effect_name] = model
-        
+
     MODELS_LOADED = True
-    print("Models initialized and weights loaded successfully!")
+    print(f"Models loaded successfully for {len(side_effect_models)} side effects.")
 except Exception as e:
     print(f"Warning: Could not load models: {e}")
     MODELS_LOADED = False
+
+
+# Human-readable display names for the model's side-effect keys
+DISPLAY_NAMES = {
+    'arterial pressure NOS decreased': 'Low Blood Pressure',
+    'anaemia': 'Anaemia',
+    'Difficulty breathing': 'Difficulty Breathing',
+    'nausea': 'Nausea',
+    'neumonia': 'Pneumonia',
+    'Fatigue': 'Fatigue',
+    'Pain': 'Pain',
+    'diarrhea': 'Diarrhea',
+    'asthenia': 'Asthenia (Weakness)',
+    'emesis': 'Emesis (Vomiting)',
+}
 
 
 class DrugFeaturizer:
@@ -94,12 +107,14 @@ class DrugFeaturizer:
         
     def get_features(self, smiles, cid):
         mol = Chem.MolFromSmiles(smiles)
+        if mol is None:
+            return np.zeros(self.fp_size + 73)
         fp = np.array(AllChem.GetMorganFingerprintAsBitVect(mol, 2, nBits=self.fp_size))
         gnn_feat = self.gnn_map.get(cid)
         if gnn_feat is None:
             gnn_feat = np.zeros(73)
         else:
-            gnn_feat = np.array(gnn_feat)
+            gnn_feat = np.nan_to_num(np.array(gnn_feat), nan=0.0)
         return np.concatenate([fp, gnn_feat])
 
 @app.route('/')
@@ -124,16 +139,10 @@ def predict():
         
         # If models aren't loaded, return demo results
         if not MODELS_LOADED:
-            # Generate mock predictions for demonstration
-            demo_effects = [
-                'Hepatotoxicity', 'Nephrotoxicity', 'Cardiotoxicity', 
-                'Neurotoxicity', 'Hematotoxicity', 'Gastrointestinal',
-                'Dermatological', 'Respiratory', 'Metabolic', 'Immunological'
-            ]
-            # Use absolute value of hash for consistent positive seed
+            # Use the real model effect names so demo output is consistent
             random.seed(abs(hash(str(sorted(drug_ids)))))
-            for effect in demo_effects:
-                results[effect] = round(random.uniform(0.1, 0.9), 4)
+            for effect_key in DISPLAY_NAMES:
+                results[DISPLAY_NAMES[effect_key]] = round(random.uniform(0.1, 0.9), 4)
             print(f"Returning demo results: {results}")
             return jsonify(results)
         
@@ -150,16 +159,16 @@ def predict():
         if not drug_tensors:
             return jsonify({'error': 'No valid drugs found'}), 400
 
-        # Aggregate the drugs into a single representation (e.g., Mean Pooling)
-        # Resulting shape: [1, feature_dim]
-        cocktail_tensor = torch.stack(drug_tensors).mean(dim=0).unsqueeze(0)
+        # Each drug tensor needs a batch dimension: (1, input_dim)
+        drug_list = [t.unsqueeze(0) for t in drug_tensors]
 
-        # 2. Run through all 10 models
+        # Run through all 10 models
+        # forward() handles aggregation (max-pool) and applies sigmoid internally
         for effect_name, model in side_effect_models.items():
             with torch.no_grad():
-                logits = model(cocktail_tensor)
-                score = torch.sigmoid(logits).item() 
-                results[effect_name] = round(score, 4)
+                score = model(drug_list).item()
+                display_name = DISPLAY_NAMES.get(effect_name, effect_name)
+                results[display_name] = round(score, 4)
 
         return jsonify(results)
     except Exception as e:
